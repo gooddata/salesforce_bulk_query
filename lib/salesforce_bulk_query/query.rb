@@ -18,6 +18,8 @@ module SalesforceBulkQuery
       @logger = options[:logger]
       @created_from = options[:created_from]
       @created_to = options[:created_to]
+      @fields = options[:fields] || []
+      @timestamp = options[:timestamp] || "CreatedDate"
       @single_batch = options[:single_batch]
       @jobs_in_progress = []
       @jobs_done = []
@@ -63,6 +65,25 @@ module SalesforceBulkQuery
       @jobs_in_progress.push(job)
     end
 
+    def start_with_fields
+
+      if (!@single_batch) && (@created_from.nil? or @created_to.nil? or @timestamp.nil? or @fields.empty?)
+        raise "The parameters created_from,create_to,timestamp and fields need to be specified"
+      end
+
+      job = SalesforceBulkQuery::Job.new(@sobject,@connection,@logger)
+      job.create_job
+      ranges = create_date_intervals(@created_from,@created_to, @single_batch ? 1 : 15 )
+
+      ranges.each do |range|
+        soql = "SELECT #{fields.join(",")} WHERE #{@timestamp} >= #{range[:start_date].to_s} and #{@timestamp} < #{range[:end_date].to_s} "
+        job.add_query(soql,{:start => range[:start_date] ,:stop => range[:end_date] })
+      end
+      job.close_job
+      @jobs_in_progress.push(job)
+    end
+
+
 
     # Check statuses of all jobs
     def check_status
@@ -76,8 +97,8 @@ module SalesforceBulkQuery
       end
 
       return {
-        :finished => all_done,
-        :job_statuses => job_statuses
+          :finished => all_done,
+          :job_statuses => job_statuses
       }
     end
 
@@ -99,11 +120,11 @@ module SalesforceBulkQuery
         end
       end
       return {
-        :filenames => job_result_filenames + @finished_batch_filenames,
-        :unfinished_subqueries => unfinished_subqueries,
-        :restarted_subqueries => @restarted_subqueries,
-        :results => all_job_results,
-        :done_jobs => @jobs_done
+          :filenames => job_result_filenames + @finished_batch_filenames,
+          :unfinished_subqueries => unfinished_subqueries,
+          :restarted_subqueries => @restarted_subqueries,
+          :results => all_job_results,
+          :done_jobs => @jobs_done
       }
     end
 
@@ -146,5 +167,41 @@ module SalesforceBulkQuery
 
       @jobs_in_progress += new_jobs
     end
+
+
+
+    def create_date_intervals(start_date,end_date,number_of_intervals)
+      start_date_int =  start_date.to_time.to_i
+      end_date_int =  end_date.to_time.to_i
+      difference =  end_date.to_time.to_i - start_date.to_time.to_i
+      part =  difference / number_of_intervals
+
+      ranges = []
+      if (number_of_intervals > 1)
+        [*0..(number_of_intervals - 2)].each do |i|
+
+          start_range = start_date_int + i * part
+          end_range = start_date_int + (i + 1) * part
+
+
+          ranges << {
+              :start_date => DateTime.parse(Time.at(start_range).to_s),
+              :end_date => DateTime.parse(Time.at(end_range).to_s)
+          }
+        end
+
+        ranges << {
+            :start_date => DateTime.parse(Time.at(start_date_int + (number_of_intervals - 1) * part).to_s),
+            :end_date => end_date
+        }
+      else
+        ranges << {
+            :start_date => start_date,
+            :end_date => end_date
+        }
+      end
+      ranges
+    end
+
   end
 end

@@ -87,6 +87,54 @@ module SalesforceBulkQuery
       return results
     end
 
+    def query_fields(sobject,options ={})
+      check_interval = options[:check_interval] || CHECK_INTERVAL
+      time_limit = options[:time_limit] || QUERY_TIME_LIMIT
+
+      start_time = Time.now
+      # start the machinery
+      query = SalesforceBulkQuery::Query.new(sobject, nil, @connection, {:logger => @logger}.merge(options))
+      query.start_with_fields
+
+      results = nil
+      loop do
+
+        # check the status
+        status = query.check_status
+
+        # if finished get the result and we're done
+        if status[:finished]
+
+          # get the results and we're done
+          results = query.get_results(:directory_path => options[:directory_path])
+          @logger.info "Query finished. Results: #{results_to_string(results)}" if @logger
+          break
+        end
+
+        # if we've run out of time limit, go away
+        if Time.now - start_time > time_limit
+          @logger.warn "Ran out of time limit, downloading what's available and terminating" if @logger
+
+          # download what's available
+          results = query.get_results(
+              :directory_path => options[:directory_path]
+          )
+
+          @logger.info "Downloaded the following files: #{results[:filenames]} The following didn't finish in time: #{results[:unfinished_subqueries]}. Results: #{results_to_string(results)}" if @logger
+          break
+        end
+
+        # restart whatever needs to be restarted and sleep
+        query.get_result_or_restart(:directory_path => options[:directory_path])
+        @logger.info "Sleeping #{check_interval}" if @logger
+        sleep(check_interval)
+      end
+
+      return results
+
+    end
+
+
     # Start the query (synchronous method)
     # @params see #query
     # @return Query instance with the running query
