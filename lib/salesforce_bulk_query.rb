@@ -31,7 +31,7 @@ module SalesforceBulkQuery
       end
 
       # initialize connection
-      @connection = SalesforceBulkQuery::Connection.new(client, api_version, @logger, options[:filename_prefix],ssl_version)
+      @connection = SalesforceBulkQuery::Connection.new(client, api_version, @logger, options[:filename_prefix], ssl_version, options[:force_encoding])
     end
 
     # Get the Salesforce instance URL

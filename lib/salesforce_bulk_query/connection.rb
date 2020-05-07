@@ -6,11 +6,12 @@ module SalesforceBulkQuery
   # Connection to the Salesforce API
   # shared in all classes that do some requests
   class Connection
-    def initialize(client, api_version, logger=nil, filename_prefix=nil,ssl_version = nil)
+    def initialize(client, api_version, logger=nil, filename_prefix=nil, ssl_version = nil, force_encoding = false)
       @client = client
       @logger = logger
       @filename_prefix = filename_prefix
       @ssl_version = ssl_version
+      @force_encoding = force_encoding
 
 
       @@API_VERSION = api_version
@@ -96,7 +97,11 @@ module SalesforceBulkQuery
         File.open(filename, 'w') do |file|
           # write the body to the file by chunks
           res.read_body do |segment|
-            file.write(segment.encode('UTF-8', :invalid => :replace, :undef => :replace,:replace => "?"))
+            if (@force_encoding)
+              file.write(segment.force_encoding('UTF-8'))
+            else
+              file.write(segment.encode('UTF-8', :invalid => :replace, :undef => :replace,:replace => "?"))
+            end
           end
         end
       end
