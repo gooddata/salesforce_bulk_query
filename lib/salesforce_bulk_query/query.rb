@@ -180,10 +180,10 @@ module SalesforceBulkQuery
       begin
         min_created_resp = @connection.client.query("SELECT #{@date_field} FROM #{@sobject} ORDER BY #{@date_field} LIMIT 1")
         min_created_resp.each {|s| min_created = s[@date_field.to_sym]}
-      rescue Faraday::Error::TimeoutError => e
+      rescue Faraday::TimeoutError => e
         @logger.warn "Timeout getting the oldest object for #{@sobject}. Error: #{e}. Using the default value" if @logger
         min_created = DEFAULT_MIN_CREATED
-      rescue Faraday::Error::ClientError => e
+      rescue Faraday::ClientError => e
         fail ArgumentError, "Error when trying to get the oldest record according to #{@date_field}, looks like #{@date_field} is not on #{@sobject}. Original error: #{e}\n #{e.message} \n #{e.backtrace} "
       end
       min_created
