@@ -26,7 +26,7 @@ to your Gemfile.
 
 Before using the library, make sure you have the right account in your Salesforce organization that has access to API and that you won't run out of the [API limits](http://www.salesforce.com/us/developer/docs/api_asynchpre/Content/asynch_api_concepts_limits.htm#batch_proc_time_title). 
 
-You will also need a Salesforce connected app for the `client_id` and `client_sercret` params, see [the guide](https://help.salesforce.com/HTViewHelpDoc?id=connected_app_create.htm&language=en_US). The app needs to have OAuth settings enabled (even if you plan to use just username-password-token authentication). The required permissions are _Access and manage your data (api)_, _Perform requests on your behalf at any time (refresh token, offline access)_. The other parameters such as redirect url don't need to be set.
+You will also need a Salesforce connected app for the `client_id` and `client_secret` params, see [the guide](https://help.salesforce.com/HTViewHelpDoc?id=connected_app_create.htm&language=en_US). The app needs to have OAuth settings enabled (even if you plan to use just username-password-token authentication). The required permissions are _Access and manage your data (api)_, _Perform requests on your behalf at any time (refresh token, offline access)_. The other parameters such as redirect url don't need to be set.
 
 For doing most of the API calls, the library uses [Restforce](https://github.com/ejholmes/restforce) Code example:
 
