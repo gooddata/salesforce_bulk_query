@@ -131,7 +131,7 @@ module SalesforceBulkQuery
           q = @client.query(soql)
           return q.size
         end
-      rescue Faraday::TimeoutError => e
+      rescue Faraday::TimeoutError, Faraday::ConnectionFailed => e
         @logger.warn "Timeout getting count: #{soql}. Error: #{e}. Taking it as failed verification" if @logger
         return nil
       end
