@@ -8,7 +8,7 @@ require 'restforce'
 require 'webmock/rspec'
 
 class Helper
-  DEFAULT_API_VERSION = '30.0'
+  DEFAULT_API_VERSION = '41.0'
   def self.create_default_restforce
     Restforce.new(
       :username => ENV['USERNAME'],
@@ -94,22 +94,27 @@ describe SalesforceBulkQuery do
         WebMock.allow_net_connect!
       end
       it "catches the timeout error for query" do
-        # stub the timeout on query
         host = URI.parse(@api.instance_url).host
         query_url = "#{host}/services/data/v#{@api_version}/query"
-        query_regexp = Regexp.new(query_url)
-        # 4 timeouts (first get the oldest record), then fake a
-        # 0 count query response
-        stub_request(:get, query_regexp).to_timeout.times(4).then.to_return(
-          :body => "{\"totalSize\":0,\"done\":true,\"records\":[]}",
-          :headers => {
-            "date"=>"Wed, 04 Feb 2015 01:18:45 GMT",
-            "set-cookie"=>"BrowserId=hahaha;Path=/;Domain=.salesforce.com;Expires=never",
-            "expires"=>"Thu, 01 Jan 1970 00:00:00 GMT",
-            "sforce-limit-info"=>"api-usage=6666/15000",
-            "content-type"=>"application/json;charset=UTF-8",
-            "transfer-encoding"=>"chunked"}
-        )
+        # timeout fetching the oldest record, so it will use a default value
+        stub_request(:get, Regexp.new(query_url))
+          .with(query: { q: "SELECT CreatedDate FROM #{@entity} ORDER BY CreatedDate LIMIT 1" })
+          .to_timeout
+        # timeout on calls to count the number of entities, but eventually succeed
+        stub_request(:get, Regexp.new(query_url))
+          .with {|request|
+            request.uri.query.start_with?("q=#{URI.encode("SELECT COUNT() FROM #{@entity} WHERE CreatedDate >= ")}")
+          }.to_timeout.times(2).then.to_return(
+            :body => "{\"totalSize\":0,\"done\":true,\"records\":[]}",
+            :headers => {
+              "date"=>"Wed, 04 Feb 2015 01:18:45 GMT",
+              "set-cookie"=>"BrowserId=hahaha;Path=/;Domain=.salesforce.com;Expires=never",
+              "expires"=>"Thu, 01 Jan 1970 00:00:00 GMT",
+              "sforce-limit-info"=>"api-usage=6666/15000",
+              "content-type"=>"application/json;charset=UTF-8",
+              "transfer-encoding"=>"chunked"
+            }
+          )
 
         # do the actual request
         WebMock.allow_net_connect!
@@ -132,7 +137,7 @@ describe SalesforceBulkQuery do
         tmp = Dir.mktmpdir
         frm = "2000-01-01"
         from = "#{frm}T00:00:00.000Z"
-        t = "2020-01-01"
+        t = "3000-01-01"
         to = "#{t}T00:00:00.000Z"
         field = 'SystemModstamp'
         result = @api.query(

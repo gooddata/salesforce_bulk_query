@@ -137,7 +137,7 @@ To run the tests locally:
 ```
 cp  env_setup-example.sh env_setup.sh
 ```
-* Setup all the params in env_setup. USERNAME, PASSWORD and TOKEN are your salesforce account credentials. You can get those by [registering for a free developer account](https://developer.salesforce.com/signup). You might need to [reset your security token](https://help.salesforce.com/apex/HTViewHelpDoc?id=user_security_token.htm) to put it to TOKEN variable. CLIENT_ID and CLIENT_SECRET belong to your Salesforce connected app. You can create one by following the steps outlined in [the tutorial](https://help.salesforce.com/apex/HTViewHelpDoc?id=connected_app_create.htm). Make sure you check the 'api' permission.
+* Setup all the params in env_setup. USERNAME, PASSWORD and TOKEN are your salesforce account credentials. You can get those by [registering for a free developer account](https://developer.salesforce.com/signup). Note that if you are using zsh then `USERNAME` is a reserved environment variable and cannot be modified. You might need to [reset your security token](https://help.salesforce.com/apex/HTViewHelpDoc?id=user_security_token.htm) to put it to TOKEN variable. CLIENT_ID and CLIENT_SECRET belong to your Salesforce connected app. You can create one by following the steps outlined in [the tutorial](https://help.salesforce.com/apex/HTViewHelpDoc?id=connected_app_create.htm). Make sure you check the 'api' permission.
 * Run the env_setup
 ```
 . env_setup.sh
