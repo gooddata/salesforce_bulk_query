@@ -1,0 +1,3 @@
+# Config scan necessary files/folder only
+sonar.exclusions=**/*.html,**/*.xml,**/*.js,**/target/src/vendor/**/*,**/target/gem_home/**/*
+sonar.tests=spec
